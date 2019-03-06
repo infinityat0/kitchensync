@@ -25,6 +25,8 @@ class ShelfManager(
         val arrivedDriversChannel = Channel<Driver>(capacity = 10)
         // channel that accepts prepared orders
         val preparedOrdersChannel = Channel<PreparedOrder>(capacity = 10)
+        // channel that contains status of the shelves
+        val shelfStatusChannel = Channel<ShelfStatus>(capacity = 10)
 
         private fun getShelf(shelfManager: ShelfManager, order: PreparedOrder): Shelf? = when (order.temp) {
             "hot" -> shelfManager.hotShelf

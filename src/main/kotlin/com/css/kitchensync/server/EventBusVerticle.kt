@@ -3,8 +3,10 @@
 package com.css.kitchensync.server
 
 import com.beust.klaxon.Klaxon
-import com.css.kitchensync.common.OrderStatus
+import com.css.kitchensync.client.OrderGeneratorClient
 import com.css.kitchensync.logging.ApplicationLogger
+import com.css.kitchensync.service.OrderHandlerServiceX
+import com.css.kitchensync.service.OrderPreparationService
 import com.css.kitchensync.service.RandomTimeDriverDispatcher
 import com.css.kitchensync.service.ShelfManager
 import com.typesafe.config.Config
@@ -17,7 +19,6 @@ import io.vertx.ext.web.handler.StaticHandler
 import io.vertx.ext.web.handler.sockjs.BridgeOptions
 import io.vertx.ext.web.handler.sockjs.PermittedOptions
 import io.vertx.ext.web.handler.sockjs.SockJSHandler
-import io.vertx.kotlin.coroutines.dispatcher
 import io.vertx.kotlin.coroutines.toChannel
 import kotlinx.coroutines.*
 import java.util.logging.Logger
@@ -39,11 +40,11 @@ class EventBusVerticle : AbstractVerticle() {
         val env = System.getProperty("env", "production")
         config.getConfig(env).getConfig("kitchensync")
     }
-    private val shelfManager: ShelfManager by lazy {
-        val driverDispatchService = RandomTimeDriverDispatcher()
-        ShelfManager(kitchenSyncConfig, driverDispatchService)
-    }
+
     private val eventBusAddress = "shelf-status"
+    private val dispatcher = RandomTimeDriverDispatcher()
+    private val kitchen = OrderPreparationService(kitchenSyncConfig, dispatcher)
+    private val shelfManager = ShelfManager(kitchenSyncConfig, dispatcher)
 
     override fun start(startFuture: Future<Void>) {
         // Initialize service and components
@@ -57,7 +58,8 @@ class EventBusVerticle : AbstractVerticle() {
 
         vertx.createHttpServer().requestHandler(router).listen(8080)
 
-        GlobalScope.launch(vertx.dispatcher()) { startPublishingOnEventBus() }
+        // start publisher that publishes on the event bus
+        GlobalScope.launch { startPublishingOnEventBus() }
     }
 
     private suspend fun startPublishingOnEventBus() {
@@ -68,7 +70,7 @@ class EventBusVerticle : AbstractVerticle() {
             val shelfStatuses = shelfManager.sweepShelvesOnDemand()
             logger.info("shelfStatuses = ${Klaxon().toJsonString(shelfStatuses)}")
             shelfStatusChannel.send(Klaxon().toJsonString(shelfStatuses))
-            delay(5000)
+            delay(1000)
         }
     }
 
@@ -78,8 +80,18 @@ class EventBusVerticle : AbstractVerticle() {
         // Make sure to shutdown gracefully when killed.
         Runtime.getRuntime().addShutdownHook(Thread { stop() })
         logger.info("shutdown hook attached")
+        // start service that handles orders
+        GlobalScope.launch {
+            coroutineScope {
+                kitchen.initialize()
+                dispatcher.initialize()
+                shelfManager.initialize()
+            }
+        }
         // start the order generator client.
-        // GlobalScope.launch { OrderGenerator().start() }
+        GlobalScope.launch {
+            OrderGeneratorClient(kitchenSyncConfig, OrderHandlerServiceX).startSendingOrders()
+        }
     }
 
     private fun makeSockJsHandler(address: String): SockJSHandler {
@@ -95,6 +107,10 @@ class EventBusVerticle : AbstractVerticle() {
         }
     }
 
+    /**
+     * Stop the server, and possibly the client.
+     * Clean up any resources that we are holding on to
+     */
     override fun stop() = runBlocking {
         logger.info("cleaning up and shutting down the server")
         vertx.eventBus().close {

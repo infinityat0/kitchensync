@@ -35,3 +35,13 @@ object OrderHandlerService {
        OrderPreparationService.orderPipeline.send(order)
     }
 }
+
+object OrderHandlerServiceX {
+
+    /**
+     * Dispatches it to the kitchen to handle it
+     */
+    fun handleOrder(order: Order) = runBlocking {
+        OrderPreparationService.orderPipeline.send(order)
+    }
+}
