@@ -1,52 +1,100 @@
 <html>
 <head>
-  <title></title>
-  <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
-  <script src="//cdn.jsdelivr.net/sockjs/0.3.4/sockjs.min.js"></script>
-  <script src="vertx-eventbus.js"></script>
-  <script>
+    <title></title>
+    <!--<link rel="stylesheet" href="css/skeleton.css"/>-->
+    <!--<link rel="stylesheet" href="css/normalize.css"/>-->
+    <link rel="stylesheet" href="css/milligram.css">
+    <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+    <script src="//cdn.jsdelivr.net/sockjs/0.3.4/sockjs.min.js"></script>
+    <script src="vertx-eventbus.js"></script>
+    <script>
      var eb = new EventBus("http://localhost:8080/eventbus");
      eb.onopen = function() {
        eb.registerHandler("shelf-status", function (err, msg) {
-         var shelf = JSON.parse(msg.body);
-         console.log(shelf);
-         painter.repaint(shelf);
-         var str = "<code>" + msg.body + "</code><br>";
-         // $('#status').prepend(str);
+         var shelves = JSON.parse(msg.body);
+         painter.repaint(shelves);
        })
      }
      var painter = (function() {
-
        return {
-         repaint: function(shelf) {
-
+         repaint: function (shelves) {
+            $.each(shelves, function (index, shelf) {
+               var tbody = $("tbody#" + shelf.shelfName);
+               tbody.empty();
+               var tr;
+               $.each(shelf.orderStatus, function(index, orderStatus) {
+                 tr = $('</tr>');
+                 tr.append("<td>" + orderStatus.name + "</td>");
+                 tr.append("<td>" + orderStatus.value + "</td>");
+                 tr.append("<td>" + orderStatus.normalizedValue + "</td>");
+                 tbody.append(tr);
+               });
+            });
          }
        };
      })();
-  </script>
+    </script>
 </head>
 
 <body>
-
-<div class="news">Latest news:</div>
-<br>
-
-<div id="status" class="news"></div>
-
-<script>
-  var eb = new EventBus("http://localhost:8080/eventbus");
-  eb.onopen = function () {
-    eb.registerHandler("shelf-status", function (err, msg) {
-      console.log(JSON.parse(msg.body).name);
-      var str = "<code>" + msg.body + "</code><br>";
-      // $('#status').prepend(str);
-      // var orderStatus = JSON.parse(msg);
-      // $('#status').prepend(orderStatus.name + ' = ' + orderStatus.value);
-    })
-  }
-
-
-</script>
-
+<!-- .container is main centered wrapper -->
+<div class="container">
+    <div class="row">
+        <div class="column">
+            <table class="u-full-width">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Value</th>
+                    <th>Normalized</th>
+                </tr>
+                </thead>
+                <tbody id="hot">
+                </tbody>
+            </table>
+        </div>
+        <div class="column">
+            <table class="u-full-width">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Value</th>
+                    <th>Normalized</th>
+                </tr>
+                </thead>
+                <tbody id="cold">
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row">
+        <div class="column">
+            <table class="u-full-width">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Value</th>
+                    <th>Normalized</th>
+                </tr>
+                </thead>
+                <tbody id="frozen">
+                </tbody>
+            </table>
+        </div>
+        <div class="column">
+            <table class="u-full-width">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Value</th>
+                    <th>Normalized</th>
+                </tr>
+                </thead>
+                <tbody id="overflow">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 </body>
 </html>

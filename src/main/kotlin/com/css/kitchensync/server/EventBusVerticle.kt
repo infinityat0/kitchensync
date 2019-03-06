@@ -3,7 +3,6 @@
 package com.css.kitchensync.server
 
 import com.beust.klaxon.Klaxon
-import com.css.kitchensync.client.OrderGenerator
 import com.css.kitchensync.common.OrderStatus
 import com.css.kitchensync.logging.ApplicationLogger
 import com.css.kitchensync.service.RandomTimeDriverDispatcher
@@ -66,17 +65,11 @@ class EventBusVerticle : AbstractVerticle() {
         val shelfStatusChannel = statusPublisher.toChannel(vertx, 10)
 
         while (true) {
-            val orderStatus = OrderStatus("Banana Split", "hot", 285.5f, 0.998f).toJson()
-            shelfStatusChannel.send(orderStatus)
             val shelfStatuses = shelfManager.sweepShelvesOnDemand()
-            logger.info("shelfStatuses = $shelfStatuses")
-            // shelfStatusChannel.send(Klaxon().toJsonString(shelfStatuses))
+            logger.info("shelfStatuses = ${Klaxon().toJsonString(shelfStatuses)}")
+            shelfStatusChannel.send(Klaxon().toJsonString(shelfStatuses))
             delay(5000)
         }
-//        // Publish a message to the address "news-feed" every second
-//        vertx.setPeriodic(1000) { t ->
-//            vertx.eventBus().publish("shelf-status", "news from the server!")
-//        }
     }
 
     private fun initializeApplication() {
