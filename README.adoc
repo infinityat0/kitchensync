@@ -1,0 +1,55 @@
+== Kitchensync
+
+image:https://img.shields.io/badge/vert.x-3.6.2-purple.svg[link="https://vertx.io"]
+
+=== Features
+- Supports
+
+
+=== PreRequisites
+1. You would need gradle to build this application.
+   You could get it through port/brew/your choice of installer
+```
+brew install gradle
+```
+2.
+
+Run script to initialize log directory:
+Logs will be stored in userhome/logs/kitchensync/server.log
+```
+  -- cd ~
+  -- mkdir -p ~/logs/kitchensync/
+```
+
+=== Building
+
+To run tests:
+```
+./gradlew clean test
+```
+
+To package application:
+```
+./gradlew clean assemble
+```
+
+To run application:
+```
+./gradlew clean run
+```
+
+To generate Kotlindoc
+```
+./gradlew clean dokka
+```
+
+Go to http://localhost:8080
+
+== Help
+
+* https://vertx.io/docs/[Vert.x Documentation]
+* https://stackoverflow.com/questions/tagged/vert.x?sort=newest&pageSize=15[Vert.x Stack Overflow]
+* https://groups.google.com/forum/?fromgroups#!forum/vertx[Vert.x User Group]
+* https://gitter.im/eclipse-vertx/vertx-users[Vert.x Gitter]
+
+

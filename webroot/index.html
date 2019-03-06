@@ -1,0 +1,52 @@
+<html>
+<head>
+  <title></title>
+  <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+  <script src="//cdn.jsdelivr.net/sockjs/0.3.4/sockjs.min.js"></script>
+  <script src="vertx-eventbus.js"></script>
+  <script>
+     var eb = new EventBus("http://localhost:8080/eventbus");
+     eb.onopen = function() {
+       eb.registerHandler("shelf-status", function (err, msg) {
+         var shelf = JSON.parse(msg.body);
+         console.log(shelf);
+         painter.repaint(shelf);
+         var str = "<code>" + msg.body + "</code><br>";
+         // $('#status').prepend(str);
+       })
+     }
+     var painter = (function() {
+
+       return {
+         repaint: function(shelf) {
+
+         }
+       };
+     })();
+  </script>
+</head>
+
+<body>
+
+<div class="news">Latest news:</div>
+<br>
+
+<div id="status" class="news"></div>
+
+<script>
+  var eb = new EventBus("http://localhost:8080/eventbus");
+  eb.onopen = function () {
+    eb.registerHandler("shelf-status", function (err, msg) {
+      console.log(JSON.parse(msg.body).name);
+      var str = "<code>" + msg.body + "</code><br>";
+      // $('#status').prepend(str);
+      // var orderStatus = JSON.parse(msg);
+      // $('#status').prepend(orderStatus.name + ' = ' + orderStatus.value);
+    })
+  }
+
+
+</script>
+
+</body>
+</html>
