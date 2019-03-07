@@ -4,8 +4,9 @@ package com.css.kitchensync.server
 
 import com.beust.klaxon.Klaxon
 import com.css.kitchensync.client.OrderGeneratorClient
+import com.css.kitchensync.config.getString
 import com.css.kitchensync.logging.ApplicationLogger
-import com.css.kitchensync.service.OrderHandlerServiceX
+import com.css.kitchensync.logging.ifDebug
 import com.css.kitchensync.service.OrderPreparationService
 import com.css.kitchensync.service.RandomTimeDriverDispatcher
 import com.css.kitchensync.service.ShelfManager
@@ -41,8 +42,8 @@ class EventBusVerticle : AbstractVerticle() {
         config.getConfig(env).getConfig("kitchensync")
     }
 
-    private val eventBusAddress = "shelf-status"
-    private val dispatcher = RandomTimeDriverDispatcher()
+    private val eventBusAddress = kitchenSyncConfig.getString("event-bus-address", "shelf-status")
+    private val dispatcher = RandomTimeDriverDispatcher(kitchenSyncConfig)
     private val kitchen = OrderPreparationService(kitchenSyncConfig, dispatcher)
     private val shelfManager = ShelfManager(kitchenSyncConfig, dispatcher)
 
@@ -66,11 +67,16 @@ class EventBusVerticle : AbstractVerticle() {
         val statusPublisher = vertx.eventBus().publisher<String>(eventBusAddress)
         val shelfStatusChannel = statusPublisher.toChannel(vertx, 10)
 
+        var pause = false
         while (true) {
             val shelfStatuses = shelfManager.sweepShelvesOnDemand()
-            logger.info("shelfStatuses = ${Klaxon().toJsonString(shelfStatuses)}")
-            shelfStatusChannel.send(Klaxon().toJsonString(shelfStatuses))
-            delay(500)
+            // don't keep sending empty stuff when you don't really need to.
+            if (!pause) {
+                logger.ifDebug { "shelfStatuses = ${Klaxon().toJsonString(shelfStatuses)}" }
+                shelfStatusChannel.send(Klaxon().toJsonString(shelfStatuses))
+            }
+            pause = shelfStatuses.all { it.isEmpty() }
+            delay(250)
         }
     }
 
@@ -90,7 +96,7 @@ class EventBusVerticle : AbstractVerticle() {
         }
         // start the order generator client.
         GlobalScope.launch {
-            OrderGeneratorClient(kitchenSyncConfig, OrderHandlerServiceX).startSendingOrders()
+            OrderGeneratorClient(kitchenSyncConfig, kitchen).startSendingOrders()
         }
     }
 

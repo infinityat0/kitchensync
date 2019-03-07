@@ -5,10 +5,12 @@ import com.css.kitchensync.common.PreparedOrder
 import com.css.kitchensync.common.hex
 import com.css.kitchensync.config.getInt
 import com.css.kitchensync.metrics.Stats
+import com.google.common.annotations.VisibleForTesting
 import com.typesafe.config.Config
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.logging.Logger
 
 /**
@@ -40,11 +42,10 @@ class OrderPreparationService(
     private suspend fun prepareFood(id: Int, channel: Channel<Order>) {
         // increment the prepared orders counter
         for (order in channel) {
-            val now = System.currentTimeMillis()
             // update the order start-time
             val preparedOrder = PreparedOrder.fromOrderRequest(order)
 
-            logger.info("[${preparedOrder.id.hex()}] prepared order: ${order.name} at $now")
+            logger.info("[${preparedOrder.id.hex()}] prepared order: ${order.name}")
             // every time a chef prepares an order, increment the counter
             Stats.incr("kitchensync_service_orders_prepared_in_kitchen")
             Stats.incr("kitchensync_service_orders_prepared_by_chef$id")
@@ -53,5 +54,9 @@ class OrderPreparationService(
             dispatcherService.dispatchDriver(preparedOrder)
             ShelfManager.preparedOrdersChannel.send(preparedOrder)
         }
+    }
+
+    @VisibleForTesting fun prepareOrder(order: Order) = runBlocking {
+        orderPipeline.send(order)
     }
 }

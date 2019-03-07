@@ -18,7 +18,7 @@ object OrderHandlerService {
     }
 
     suspend fun initialize() {
-        val dispatcher = RandomTimeDriverDispatcher()
+        val dispatcher = RandomTimeDriverDispatcher(kitchenSyncConfig)
         val kitchen = OrderPreparationService(kitchenSyncConfig, dispatcher)
         val shelfManager = ShelfManager(kitchenSyncConfig, dispatcher)
         coroutineScope {
@@ -33,15 +33,5 @@ object OrderHandlerService {
      */
     fun handleOrder(order: Order) = runBlocking {
        OrderPreparationService.orderPipeline.send(order)
-    }
-}
-
-object OrderHandlerServiceX {
-
-    /**
-     * Dispatches it to the kitchen to handle it
-     */
-    fun handleOrder(order: Order) = runBlocking {
-        OrderPreparationService.orderPipeline.send(order)
     }
 }

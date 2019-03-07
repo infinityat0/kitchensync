@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- saved from url=(0046)https://semantic-ui.com/examples/attached.html -->
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -37,8 +36,8 @@
                $.each(shelf.orderStatus, function(index, orderStatus) {
                  var tr = $('<tr class="' + orderStatus.temp + '">');
                  tr.append('<td>' + orderStatus.name + '</td>');
-                 tr.append('<td class="right aligned">' + orderStatus.value + '</td>');
-                 tr.append('<td class="right aligned">' + orderStatus.normalizedValue + '</td>');
+                 tr.append('<td class="right aligned">' + orderStatus.value.toFixed(2) + '</td>');
+                 tr.append('<td class="right aligned">' + orderStatus.normalizedValue.toFixed(2) + '</td>');
                  tbody.append(tr);
                });
             });
@@ -49,7 +48,6 @@
      eb.onopen = function() {
        eb.registerHandler("shelf-status", function (err, msg) {
          var shelves = JSON.parse(msg.body);
-         console.log(shelves);
          renderer.repaint(shelves);
        })
      }
@@ -67,8 +65,8 @@
                 <thead>
                 <tr>
                     <th class="seven wide">Order</th>
-                    <th class="four wide right aligned">Value</th>
-                    <th class="five wide right aligned">N</th>
+                    <th class="five wide right aligned">Value</th>
+                    <th class="four wide right aligned">N</th>
                 </tr>
                 </thead>
                 <tbody id="hot">
@@ -83,8 +81,8 @@
                 <thead>
                 <tr>
                     <th class="seven wide">Order</th>
-                    <th class="four wide right aligned">Value</th>
-                    <th class="five wide right aligned">N</th>
+                    <th class="five wide right aligned">Value</th>
+                    <th class="four wide right aligned">N</th>
                 </tr>
                 </thead>
                 <tbody id="cold">
@@ -99,8 +97,8 @@
                 <thead>
                 <tr>
                     <th class="seven wide">Order</th>
-                    <th class="four wide right aligned">Value</th>
-                    <th class="five wide right aligned">N</th>
+                    <th class="five wide right aligned">Value</th>
+                    <th class="four wide right aligned">N</th>
                 </tr>
                 </thead>
                 <tbody id="frozen" title="Frozen">
@@ -115,8 +113,8 @@
                 <thead>
                 <tr>
                     <th class="seven wide">Order</th>
-                    <th class="four wide right aligned">Value</th>
-                    <th class="five wide right aligned">N</th>
+                    <th class="five wide right aligned">Value</th>
+                    <th class="four wide right aligned">N</th>
                 </tr>
                 </thead>
                 <tbody id="overflow" title="Overflow">

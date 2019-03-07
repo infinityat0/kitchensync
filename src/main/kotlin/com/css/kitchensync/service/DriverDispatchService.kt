@@ -2,10 +2,12 @@ package com.css.kitchensync.service
 
 import com.css.kitchensync.common.PreparedOrder
 import com.css.kitchensync.common.hex
+import com.css.kitchensync.config.getInt
 import com.css.kitchensync.duration.seconds
 import com.css.kitchensync.metrics.Stats
 import com.google.common.annotations.VisibleForTesting
 import com.google.common.collect.Maps
+import com.typesafe.config.Config
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.time.Duration
@@ -42,10 +44,12 @@ interface DriverDispatchService {
  * Handles dispatches and assigns drivers that arrive anytime between
  * [2, 10] seconds
  */
-internal class RandomTimeDriverDispatcher: DriverDispatchService {
+internal class RandomTimeDriverDispatcher(kitchenSyncConfig: Config): DriverDispatchService {
 
     private val logger = Logger.getLogger(this.javaClass.simpleName)
     private val driverDispatcherChannel = Channel<PreparedOrder>(10)
+    private val minArrivalTime = kitchenSyncConfig.getInt("driver-min-arrival-time", 2)
+    private val maxArrivalTime = kitchenSyncConfig.getInt("driver-max-arrival-time", 10)
 
     // Has a mapping from order-id -> driver that's running it
     @VisibleForTesting val driverMap: ConcurrentMap<Int, Driver> = Maps.newConcurrentMap<Int, Driver>()
@@ -95,7 +99,7 @@ internal class RandomTimeDriverDispatcher: DriverDispatchService {
 
     @VisibleForTesting fun getArrivalTime(): Duration {
         // need arrival time to be between [2, 10] seconds
-        return (Random.nextInt(9) + 2).seconds()
+        return (Random.nextInt(until = (maxArrivalTime - minArrivalTime) + 1) + minArrivalTime).seconds()
     }
 
     /**

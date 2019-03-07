@@ -1,6 +1,7 @@
 package com.css.kitchensync.service
 
 import com.css.kitchensync.common.PreparedOrder
+import com.css.kitchensync.testConfig
 import io.kotlintest.matchers.numerics.shouldBeGreaterThanOrEqual
 import io.kotlintest.matchers.numerics.shouldBeLessThanOrEqual
 import io.kotlintest.shouldBe
@@ -14,7 +15,7 @@ import kotlinx.coroutines.runBlocking
 class DriverDispatcherSpec : StringSpec() {
 
     private fun makeDispatcher(): RandomTimeDriverDispatcher {
-        val dispatcher = RandomTimeDriverDispatcher()
+        val dispatcher = RandomTimeDriverDispatcher(testConfig())
         dispatcher.initialize()
         return dispatcher
     }
@@ -57,14 +58,12 @@ class DriverDispatcherSpec : StringSpec() {
 
         "dispatcher should cancel driver" {
             val dispatcher = makeDispatcher()
-            runBlocking {
-                val order = PreparedOrder("Ice cream", "frozen", 100, 0.5f)
-                dispatcher.dispatchDriver(order)
-                delay(500)
-                dispatcher.cancelDriverForOrder(order)
-                delay(500)
-                dispatcher.driverMap.containsKey(order.id) shouldBe false
-            }
+            val order = PreparedOrder("Ice cream", "frozen", 100, 0.5f)
+            dispatcher.dispatchDriver(order)
+            delay(500)
+            dispatcher.cancelDriverForOrder(order)
+            delay(500)
+            dispatcher.driverMap.containsKey(order.id) shouldBe false
         }
     }
 }

@@ -11,7 +11,7 @@ class ShelfManagerSpec: StringSpec () {
 
     private val shelfManager = ShelfManager(
         kitchenSyncConfig = testConfig(),
-        dispatcher = RandomTimeDriverDispatcher()
+        dispatcher = RandomTimeDriverDispatcher(testConfig())
     )
 
     private fun addOrderToShelf(order: PreparedOrder) = runBlocking {

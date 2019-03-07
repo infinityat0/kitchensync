@@ -4,14 +4,11 @@ import com.beust.klaxon.JsonReader
 import com.beust.klaxon.Klaxon
 import com.css.kitchensync.common.Order
 import com.css.kitchensync.common.hex
-import com.css.kitchensync.logging.ApplicationLogger
 import com.css.kitchensync.logging.error
 import com.css.kitchensync.logging.ifDebug
 import com.css.kitchensync.metrics.Stats
-import com.css.kitchensync.service.OrderHandlerService
-import com.css.kitchensync.service.OrderHandlerServiceX
+import com.css.kitchensync.service.OrderPreparationService
 import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -29,26 +26,14 @@ import com.twitter.common.stats.Stats as StatsLib
  * It reads orders from a file and models traffic based on PoissonDistribution
  * with a configurable mean.
  *
- * This is a standalone application. When run independently, it will start
- * - reading orders,
- * - processing orders
- * - dispatching driver
- * - managing the shelfs
- *
- * and dumps all results in the console/log file.
+ * This is meant to run inside the server instance.
  */
-class OrderGenerator {
+class OrderGeneratorClient(
+    private val kitchenSyncConfig: Config,
+    private val service: OrderPreparationService) {
 
-    private val service: OrderHandlerServiceX = OrderHandlerServiceX
     private val logger = Logger.getLogger(this.javaClass.simpleName)
-
     private val timer: Timer by lazy { Timer(/* isDaemon = */ true) }
-
-    private val kitchenSyncConfig: Config by lazy {
-        val config = ConfigFactory.load()
-        val env = System.getProperty("env", "production")
-        config.getConfig(env).getConfig("kitchensync")
-    }
 
     private val distribution: PoissonDistribution by lazy {
         val meanTrafficPerSecond = kitchenSyncConfig.getDouble("client.orders.mean-traffic")
@@ -99,10 +84,10 @@ class OrderGenerator {
      */
     private fun sendOrder(order: Order) {
         logger.ifDebug { "[${order.id.hex()}] Sending order to kitchen: ${order.name}" }
-        GlobalScope.launch { service.handleOrder(order) }
+        GlobalScope.launch { service.prepareOrder(order) }
     }
 
-    private fun start() {
+    internal fun startSendingOrders() {
         try {
             readOrdersAndSend(kitchenSyncConfig.getConfig("client.orders"))
             val ordersCreated = Stats.getCounter("kitchensync_client_orders_created")
@@ -111,24 +96,18 @@ class OrderGenerator {
             logger.error("failed while generating/sending orders.", ex)
         } finally {
             // no matter what happens, clean up
-            logger.info("shutting the application down")
+            logger.info("shutting the client down")
             cleanUp()
         }
     }
 
+    /**
+     * Print stats on how we did. Need to add more counters
+     */
     private fun printStats() {
         StatsLib.getVariables().forEach { stat ->
             logger.info("Stat: ${stat.name} = ${stat.read()}")
         }
-    }
-
-    fun initialize() {
-        ApplicationLogger.initialize(kitchenSyncConfig)
-        logger.info("initializing the application")
-        // Make sure to shutdown gracefully when killed.
-        Runtime.getRuntime().addShutdownHook(Thread { cleanUp() })
-        logger.info("shutdown hook attached")
-        start()
     }
 
     /**
@@ -142,11 +121,4 @@ class OrderGenerator {
         // clean up the timer and end remaining tasks
         timer.cancel()
     }
-}
-
-fun main() {
-    // start the service
-    GlobalScope.launch { OrderHandlerService.initialize() }
-    // start the client and generate orders
-    OrderGenerator().initialize()
 }

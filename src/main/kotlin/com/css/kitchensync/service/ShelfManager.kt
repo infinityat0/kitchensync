@@ -92,7 +92,7 @@ class ShelfManager(
         // start a ticker that ticks every second after the first second.
         val tickerChannel = ticker(delayMillis = tickerPeriodicity, initialDelayMillis = 1000)
         for (tick in tickerChannel) {
-            logger.info("received a tick: doing housekeeping")
+            logger.ifDebug { "received a tick: doing housekeeping" }
             sweepShelf(hotShelf)
             sweepShelf(coldShelf)
             sweepShelf(frozenShelf)
@@ -150,11 +150,12 @@ class ShelfManager(
         val orderStatuses = shelf.getAllValues().map { order ->
             val orderValue = order.valueNow(isInOverflowShelf = shelf.name == "overflow")
             // Hack to get 2 digits of precision for float instead of 6
-            val normalized: Float = ((orderValue * 100)/ order.shelfLife).toInt()/100.0f
+            val normalized = orderValue / order.shelfLife
             logger.ifDebug { "[${order.id.hex()}] ${order.name} currentValue=$orderValue, normalized=$normalized" }
             OrderStatus(order.name, order.temp, orderValue, normalized)
         }
-        return ShelfStatus(shelf.name, orderStatus = orderStatuses)
+        // Lexical sort this by name for better tracking
+        return ShelfStatus(shelf.name, orderStatus = orderStatuses.sortedBy { it.name })
     }
 
     private fun sweepAndUpdateOverflowShelf() {

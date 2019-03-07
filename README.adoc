@@ -1,26 +1,20 @@
-== Kitchensync
-
-image:https://img.shields.io/badge/vert.x-3.6.2-purple.svg[link="https://vertx.io"]
-
-=== Features
-- Supports
-
-
-=== PreRequisites
-1. You would need gradle to build this application.
+== Kitchensync*
+'''
+=== Pre Requisites
+- You would need gradle to build this application.
    You could get it through port/brew/your choice of installer
 ```
 brew install gradle
 ```
-2.
-
-Run script to initialize log directory:
-Logs will be stored in userhome/logs/kitchensync/server.log
+- Run script to initialize log directory:
+Logs will be stored in user-home/logs/kitchensync/server.log
 ```
-  -- cd ~
-  -- mkdir -p ~/logs/kitchensync/
+  cd ~
+  mkdir -p ~/logs/kitchensync/
 ```
+If you want to change the location of the logs, update ``src/main/resources/logging.properties``
 
+'''
 === Building
 
 To run tests:
@@ -37,19 +31,86 @@ To run application:
 ```
 ./gradlew clean run
 ```
+and go to http://localhost:8080
+
+To run it as a standalone application: (no html, shelf status printed in the console)
+```
+./gradlew clean runStandalone
+```
 
 To generate Kotlindoc
 ```
 ./gradlew clean dokka
 ```
 
-Go to http://localhost:8080
+'''
+=== Things to note
+* Most of the parameters in this application are configurable. These configuration parameters are present in
+ ``src/main/resources/application.conf``. This web service uses HOCON based configuration that loads up at start time.
+  It's a little work(not too much) to have this config updatable while the application is running.
+  (But, I'll leave it as an exercise for you :))
+* It uses a twitter Stats library. Stats are printed in console after
+  ``OrderGeneratorClient`` runs out of orders to send to the kitchen.
+  (It should be trivial to export to a web page but I'd rather dump these into graphite/grafana.
+  It's a feature for next release :))
+* Order decay formula is *dynamic*. It has three variables. ``shelfLife``, ``decayRate``, ``orderAge``.
+* To override the original formula, update ``orders.json`` and provide the expression to ``orderDecayFormula``
+     For ex:
+```
+  {
+    "name": "Banana Split",
+    "temp": "frozen",
+    "shelfLife": 20,
+    "decayRate": 0.63
+    "orderDecayFormula" : "shelfLife*2 - orderAge - (decayRate^2)*orderAge"
+  },
+```
+* When in overflow shelf decay rate is twice the ordinary ``decayRate``.
+     So, if we substitute it in the previous expression, the new formula is
+```
+   orderDecayFormula = "shelfLife*2 - 2*orderAge - ((2*decayRate)^2)*orderAge"
+```
+* If the formula is incorrect or unparsable, the client simply ignores the order.
+  (We could have reverted to a default formula but that would give wrong values
+   for readings and it would confuse the hell out of testers)
+* In the event orderDecayFormula is not provided, the application reverts to using the default formula
+```
+   orderDecayFormula = "shelfLife - (1 + decayRate)*orderAge"
+```
+* You could also test this in ``com.css.kitchensync.common.PreparedOrderSpec``
 
-== Help
+=== Design
+* Uses Vertx web server with SockJS to create an eventBus that pushes shelf status to the client (web page)
+* Order creation is done by ``com.css.kitchensync.OrderGeneratorClient`` which gets initialized in the Verticle
+** It reads the orders.json and sends orders based on a poisson distribution.
+   (mean for this is configurable)
+   See ``resources/application.conf:production.kitchensync.client.orders.mean-traffic``
+** OrderGeneratorClient "sends" the orders to OrderHandlerService
+   (In ideal world these come from the http service/SQS/kafka etc)
+* OrderHandlerService uses channels to communicate with
+** Order Preparation Service (aka kitchen)
+** Dispatcher Service (Interface used to dispatch a driver with one implementation class: RandomTimeDriverDispatcher)
+** ShelfManagerService (ShelfManager)
+* OrderPreparationService
+** prepares the orders (and sets the prep time on the order)
+** Calls for dispatcher to assign a driver
+** Calls ShelfManager to manage this order (assign an appropriate shelf)
+* DispatcherService
+** Creates a Driver, dispatches driver to arrive at a random time
+   (2-10 seconds: this is configurable in application.conf)
+** Starts tracking order -> driver mapping
+** Starts tracking driver -> arrival mapping. (Let's ShelfManager know that driver has arrived after)
+** cancels the driver when ``DispatcherService:cancelDriverForOrder()`` is called
+* ShelfManager
+**
 
-* https://vertx.io/docs/[Vert.x Documentation]
-* https://stackoverflow.com/questions/tagged/vert.x?sort=newest&pageSize=15[Vert.x Stack Overflow]
-* https://groups.google.com/forum/?fromgroups#!forum/vertx[Vert.x User Group]
-* https://gitter.im/eclipse-vertx/vertx-users[Vert.x Gitter]
 
+=== Future Improvements
+* We could have used koin for dependency injection
+* Shelf Manager could emit ``Message`` objects indicating status of each order and what happened
+** Handed to driver
+** Moved to/from overflow
+** Discarded and cancelled driver
 
+'''
+* This doc is best viewed with asciiDoctor.js chrome extension.

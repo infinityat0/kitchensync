@@ -100,9 +100,9 @@ run {
   args = ['run', mainVerticleName, "--redeploy=$watchForChange", "--launcher-class=$mainClassName", "--on-redeploy=$doOnChange"]
 }
 
-task runClient(type:JavaExec) {
+task runStandalone(type:JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = "com.css.kitchensync.client.OrderGenerator"
+    main = "com.css.kitchensync.standalone.OrderGeneratorStandalone"
 }
 
 task wrapper(type: Wrapper) {
