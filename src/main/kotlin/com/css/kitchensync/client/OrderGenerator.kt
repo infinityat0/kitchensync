@@ -9,6 +9,7 @@ import com.css.kitchensync.logging.error
 import com.css.kitchensync.logging.ifDebug
 import com.css.kitchensync.metrics.Stats
 import com.css.kitchensync.service.OrderHandlerService
+import com.css.kitchensync.service.OrderHandlerServiceX
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import kotlinx.coroutines.GlobalScope
@@ -27,10 +28,18 @@ import com.twitter.common.stats.Stats as StatsLib
  * Class that generates and sends orders to a service in real time.
  * It reads orders from a file and models traffic based on PoissonDistribution
  * with a configurable mean.
+ *
+ * This is a standalone application. When run independently, it will start
+ * - reading orders,
+ * - processing orders
+ * - dispatching driver
+ * - managing the shelfs
+ *
+ * and dumps all results in the console/log file.
  */
 class OrderGenerator {
 
-    private val service: OrderHandlerService = OrderHandlerService
+    private val service: OrderHandlerServiceX = OrderHandlerServiceX
     private val logger = Logger.getLogger(this.javaClass.simpleName)
 
     private val timer: Timer by lazy { Timer(/* isDaemon = */ true) }
@@ -93,7 +102,7 @@ class OrderGenerator {
         GlobalScope.launch { service.handleOrder(order) }
     }
 
-    internal fun start() {
+    private fun start() {
         try {
             readOrdersAndSend(kitchenSyncConfig.getConfig("client.orders"))
             val ordersCreated = Stats.getCounter("kitchensync_client_orders_created")

@@ -1,0 +1,116 @@
+<html>
+<head>
+    <title> Kitchen Sync Application </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.css">
+    <link rel="stylesheet" href="css/milligram.min.css">
+
+    <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+    <script>
+     <!--var eb = new EventBus("http://localhost:8080/eventbus");-->
+     <!--eb.onopen = function() {-->
+       <!--eb.registerHandler("shelf-status", function (err, msg) {-->
+         <!--var shelves = JSON.parse(msg.body);-->
+         <!--painter.repaint(shelves);-->
+       <!--})-->
+     <!--}-->
+     <!--var painter = (function() {-->
+       <!--return {-->
+         <!--repaint: function (shelves) {-->
+            <!--$.each(shelves, function (index, shelf) {-->
+               <!--var tbody = $("tbody#" + shelf.shelfName);-->
+               <!--tbody.empty();-->
+               <!--var tr;-->
+               <!--$.each(shelf.orderStatus, function(index, orderStatus) {-->
+                 <!--tr = $('</tr>');-->
+                 <!--tr.append("<td>" + orderStatus.name + "</td>");-->
+                 <!--tr.append("<td>" + orderStatus.value + "</td>");-->
+                 <!--tr.append("<td>" + orderStatus.normalizedValue + "</td>");-->
+                 <!--tbody.append(tr);-->
+               <!--});-->
+            <!--});-->
+         <!--}-->
+       <!--};-->
+     <!--})();-->
+     <!---->
+     var paint = (function() {
+       return {
+         repaint: function (shelves) {
+            $.each(shelves, function (index, shelf) {
+               var tbody = $("tbody#" + shelf.shelfName);
+               tbody.empty();
+               $.each(shelf.orderStatus, function(index, orderStatus) {
+                 var tr = $('<tr>');
+                 tr.append("<td>" + orderStatus.name + "</td>");
+                 tr.append("<td>" + orderStatus.value + "</td>");
+                 tr.append("<td>" + orderStatus.normalizedValue + "</td>");
+                 tbody.append(tr);
+               });
+            });
+         }
+       };
+     })();
+    </script>
+</head>
+
+<body>
+<!-- .container is main centered wrapper -->
+<div class="container">
+    <div class="row">
+        <div class="column">
+            <table class="u-full-width">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Value</th>
+                    <th>Normalized</th>
+                </tr>
+                </thead>
+                <tbody id="hot">
+                </tbody>
+            </table>
+        </div>
+        <div class="column">
+            <table class="u-full-width">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Value</th>
+                    <th>Normalized</th>
+                </tr>
+                </thead>
+                <tbody id="cold">
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row">
+        <div class="column">
+            <table class="u-full-width">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Value</th>
+                    <th>Normalized</th>
+                </tr>
+                </thead>
+                <tbody id="frozen">
+                </tbody>
+            </table>
+        </div>
+        <div class="column">
+            <table class="u-full-width">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Value</th>
+                    <th>Normalized</th>
+                </tr>
+                </thead>
+                <tbody id="overflow">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

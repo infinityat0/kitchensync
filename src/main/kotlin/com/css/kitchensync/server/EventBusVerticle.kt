@@ -70,7 +70,7 @@ class EventBusVerticle : AbstractVerticle() {
             val shelfStatuses = shelfManager.sweepShelvesOnDemand()
             logger.info("shelfStatuses = ${Klaxon().toJsonString(shelfStatuses)}")
             shelfStatusChannel.send(Klaxon().toJsonString(shelfStatuses))
-            delay(1000)
+            delay(500)
         }
     }
 

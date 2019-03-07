@@ -100,6 +100,11 @@ run {
   args = ['run', mainVerticleName, "--redeploy=$watchForChange", "--launcher-class=$mainClassName", "--on-redeploy=$doOnChange"]
 }
 
+task runClient(type:JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = "com.css.kitchensync.client.OrderGenerator"
+}
+
 task wrapper(type: Wrapper) {
   gradleVersion = '4.6'
 }

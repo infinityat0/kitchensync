@@ -149,7 +149,8 @@ class ShelfManager(
     private fun computeAndLogValueOfOrdersInShelf(shelf: Shelf): ShelfStatus {
         val orderStatuses = shelf.getAllValues().map { order ->
             val orderValue = order.valueNow(isInOverflowShelf = shelf.name == "overflow")
-            val normalized = orderValue / order.shelfLife
+            // Hack to get 2 digits of precision for float instead of 6
+            val normalized: Float = ((orderValue * 100)/ order.shelfLife).toInt()/100.0f
             logger.ifDebug { "[${order.id.hex()}] ${order.name} currentValue=$orderValue, normalized=$normalized" }
             OrderStatus(order.name, order.temp, orderValue, normalized)
         }
