@@ -9,8 +9,8 @@ brew install gradle
 - Run script to initialize log directory:
 Logs will be stored in user-home/logs/kitchensync/server.log
 ```
-  cd ~
-  mkdir -p ~/logs/kitchensync/
+cd ~
+mkdir -p ~/logs/kitchensync/
 ```
 If you want to change the location of the logs, update ``src/main/resources/logging.properties``
 

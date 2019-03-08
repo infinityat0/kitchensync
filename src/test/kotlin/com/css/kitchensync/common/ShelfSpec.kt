@@ -96,5 +96,42 @@ class ShelfSpec: StringSpec() {
             expiredOrders.size shouldBe 1
             expiredOrders.first() shouldBe expiredOrder
         }
+
+        "order should decay when kept in it's shelf" {
+            // order should decay 2/sec
+            val order = PreparedOrder("Ice Cream", "frozen", shelfLife = 10, decayRate = 1.0f)
+            order.computeAndAssignValue(
+                computeTimeInMs = System.currentTimeMillis() + 2000,
+                isInOverflowShelf = false)
+            order.valueAtLastMeasured shouldBe 6.0f
+        }
+
+        "order should decay twice as fast in overflow shelf" {
+            // order should decay 2/sec
+            val order = PreparedOrder("Ice Cream", "frozen", shelfLife = 10, decayRate = 1.0f)
+            // when kept in overflow shelf, it should have decayed twice as much
+            order.computeAndAssignValue(
+                computeTimeInMs = System.currentTimeMillis() + 2000,
+                isInOverflowShelf = true)
+            order.valueAtLastMeasured shouldBe 4.0f
+
+        }
+
+        "order should decay at normal rate after order is moved from the shelf" {
+            val order = PreparedOrder("Ice Cream", "frozen", shelfLife = 12, decayRate = 1.0f)
+            // when kept in overflow shelf, it should have decayed twice as much
+            order.computeAndAssignValue(
+                computeTimeInMs = System.currentTimeMillis() + 2000,
+                isInOverflowShelf = true)
+            // in 2 seconds order would have decayed by 6 points
+            order.valueAtLastMeasured shouldBe 6.0f
+
+            // move it to it's own shelf and wait for two more seconds
+            order.computeAndAssignValue(
+                computeTimeInMs = order.lastMeasuredTimestamp + 2000,
+                isInOverflowShelf = false)
+            // it should have decayed by 4 points
+            order.valueAtLastMeasured shouldBe 2.0f
+        }
     }
 }

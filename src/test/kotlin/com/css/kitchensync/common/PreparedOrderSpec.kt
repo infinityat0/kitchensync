@@ -56,7 +56,6 @@ class PreparedOrderSpec: StringSpec({
         val initialValue = 1000
         val order = PreparedOrder("Yogurt", "cold", initialValue, 0.5f,
             valueExpression = "shelfLife*2 - (decayRate^2)*orderAge")
-        println(order.valueAfter(100))
         order.valueAfter(100) shouldBe 1975.0f
     }
 })

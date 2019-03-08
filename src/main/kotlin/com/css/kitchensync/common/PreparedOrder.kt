@@ -14,21 +14,6 @@ data class PreparedOrder(
     val id: Int = Random.nextInt(),
     val valueExpression: String = "shelfLife - (1 + decayRate)*orderAge") {
 
-    companion object {
-        val logger: Logger = Logger.getLogger("PreparedOrder")
-
-        // Generate prepared order from order request
-        fun fromOrderRequest(order: Order): PreparedOrder {
-            return PreparedOrder(
-                id = order.id,
-                name = order.name,
-                temp = order.temp,
-                shelfLife = order.shelfLife,
-                decayRate = order.decayRate,
-                valueExpression = order.valueExpression
-            )
-        }
-    }
     // Should be updatable later since the time we create an instance may not
     // be the time we actually send the order
     val preparedAt: Long = System.currentTimeMillis()
@@ -39,7 +24,7 @@ data class PreparedOrder(
     @VisibleForTesting var lastMeasuredTimestamp: Long = preparedAt
 
     @Synchronized fun computeAndAssignValue(computeTimeInMs: Long, isInOverflowShelf: Boolean) {
-        val elapsed = (computeTimeInMs - preparedAt)/1000
+        val elapsed = (computeTimeInMs - lastMeasuredTimestamp)/1000
         valueAtLastMeasured = valueAfter(elapsed.toInt(), isInOverflowShelf)
         lastMeasuredTimestamp = computeTimeInMs
     }
@@ -73,6 +58,22 @@ data class PreparedOrder(
                     "postSubstitution=$expression")
             // call the order expired and move on
             0f
+        }
+    }
+
+    companion object {
+        val logger: Logger = Logger.getLogger("PreparedOrder")
+
+        // Generate prepared order from order request
+        fun fromOrderRequest(order: Order): PreparedOrder {
+            return PreparedOrder(
+                id = order.id,
+                name = order.name,
+                temp = order.temp,
+                shelfLife = order.shelfLife,
+                decayRate = order.decayRate,
+                valueExpression = order.valueExpression
+            )
         }
     }
 }
