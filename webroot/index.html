@@ -15,20 +15,68 @@
     <link rel="stylesheet" type="text/css" href="css/table.css">
     <link rel="stylesheet" type="text/css" href="css/main.css">
     <style type="text/css">
-  h2 {
-    margin: 2em 0em;
-  }
-  .ui.container {
-    padding-top: 5em;
-    padding-bottom: 5em;
-  }
+      h2 {
+        margin: 2em 0em;
+      }
+      .ui.container {
+        padding-top: 5em;
+        padding-bottom: 5em;
+      }
     </style>
     <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
     <script src="//cdn.jsdelivr.net/sockjs/0.3.4/sockjs.min.js"></script>
     <script src="js/vertx-eventbus.js"></script>
     <script>
      var renderer = (function() {
+         var add = function (orderStatus, shelf) {
+           var tbody = $("tbody#" + shelf);
+           var tr = $('<tr id="' +orderStatus.id+ '" class="' + orderStatus.temp + '">');
+           tr.append('<td>' + orderStatus.name + '</td>');
+           tr.append('<td class="value right aligned">' + orderStatus.value.toFixed(2) + '</td>');
+           tr.append('<td class="n right aligned">' + orderStatus.normalizedValue.toFixed(2) + '</td>');
+           tbody.append(tr);
+         },
+         remove = function (orderStatus) {
+           $("#" + orderStatus.id).remove();
+         },
+         update = function (orderStatus, shelf) {
+           var cells = $("#" + orderStatus.id).children("td");
+           if (typeof cells !== 'undefined'
+               && typeof cells[1] !== 'undefined'
+               && typeof cells[2] !== 'undefined') {
+             cells[1].textContent = orderStatus.value.toFixed(2);
+             cells[2].textContent = orderStatus.normalizedValue.toFixed(3);
+           } else {
+             // we missed the add message. let's try and add it now.
+             add(orderStatus, shelf);
+           }
+         },
+         move = function (fromShelf, toShelf, orderStatus) {
+           // remove wherever it is
+           var row = $("#" + orderStatus.id).detach();
+           var tbody = $("tbody#" + toShelf);
+           row.appendTo(tbody);
+         };
        return {
+         handle: function (message) {
+            switch(message.action) {
+               case "add-order":
+                  add(message.orderStatus, message.shelf);
+                  break;
+               case "remove-order":
+                  remove(message.orderStatus);
+                  break;
+               case "update-value":
+                  update(message.orderStatus, message.shelf);
+                  break;
+               case "move-order":
+                  move(message.fromShelf, message.toShelf, message.orderStatus);
+                  break;
+               default :
+                  console.log("unknown message" + message.action);
+                  break;
+            }
+         },
          repaint: function (shelves) {
             $.each(shelves, function (index, shelf) {
                var tbody = $("tbody#" + shelf.shelfName);
@@ -47,8 +95,8 @@
      var eb = new EventBus("http://localhost:8080/eventbus");
      eb.onopen = function() {
        eb.registerHandler("shelf-status", function (err, msg) {
-         var shelves = JSON.parse(msg.body);
-         renderer.repaint(shelves);
+         var update = JSON.parse(msg.body);
+         renderer.handle(update);
        })
      }
     </script>

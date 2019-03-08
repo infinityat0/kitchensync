@@ -4,6 +4,7 @@ import com.css.kitchensync.common.PreparedOrder
 import com.css.kitchensync.common.hex
 import com.css.kitchensync.config.getInt
 import com.css.kitchensync.duration.seconds
+import com.css.kitchensync.logging.ifDebug
 import com.css.kitchensync.metrics.Stats
 import com.google.common.annotations.VisibleForTesting
 import com.google.common.collect.Maps
@@ -81,7 +82,7 @@ internal class RandomTimeDriverDispatcher(kitchenSyncConfig: Config): DriverDisp
             val job = launch {
                 delay(arrivalTime.toMillis())
                 if (!isDriverCancelled(driver)) {
-                    logger.info("[${order.id}] ${driver.name} is arriving...")
+                    logger.ifDebug { "[${order.id}] ${driver.name} is arriving..." }
                     // Stop tracking that driver since the driver is going to be at the door
                     driverMap.remove(driver.order.id)
                     driverTracker.remove(driver.name)

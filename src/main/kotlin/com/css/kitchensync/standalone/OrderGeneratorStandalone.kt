@@ -8,7 +8,7 @@ import com.css.kitchensync.logging.ApplicationLogger
 import com.css.kitchensync.logging.error
 import com.css.kitchensync.logging.ifDebug
 import com.css.kitchensync.metrics.Stats
-//import com.css.kitchensync.service.OrderHandlerService
+import com.css.kitchensync.service.OrderHandlerService
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import kotlinx.coroutines.GlobalScope
@@ -38,7 +38,7 @@ import com.twitter.common.stats.Stats as StatsLib
  */
 object OrderHandler {
 
-    // private val service: OrderHandlerService = OrderHandlerService
+    private val service: OrderHandlerService = OrderHandlerService
     private val logger = Logger.getLogger(this.javaClass.simpleName)
 
     private val timer: Timer by lazy { Timer(/* isDaemon = */ true) }
@@ -98,7 +98,7 @@ object OrderHandler {
      */
     private fun sendOrder(order: Order) {
         logger.ifDebug { "[${order.id}] Sending order to kitchen: ${order.name}" }
-        // GlobalScope.launch { service.handleOrder(order) }
+        GlobalScope.launch { service.handleOrder(order) }
     }
 
     private fun start() {
@@ -145,7 +145,7 @@ object OrderHandler {
 
 fun main() {
     // start the service
-    // GlobalScope.launch { OrderHandlerService.initialize() }
+    GlobalScope.launch { OrderHandlerService.initialize() }
     // start the client and generate orders
     OrderHandler.initialize()
 }

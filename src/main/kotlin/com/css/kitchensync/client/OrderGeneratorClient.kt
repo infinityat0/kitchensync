@@ -3,7 +3,6 @@ package com.css.kitchensync.client
 import com.beust.klaxon.JsonReader
 import com.beust.klaxon.Klaxon
 import com.css.kitchensync.common.Order
-import com.css.kitchensync.common.hex
 import com.css.kitchensync.logging.error
 import com.css.kitchensync.logging.ifDebug
 import com.css.kitchensync.metrics.Stats

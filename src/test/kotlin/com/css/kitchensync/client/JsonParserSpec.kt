@@ -2,11 +2,9 @@ package com.css.kitchensync.client
 
 import com.beust.klaxon.Klaxon
 import com.css.kitchensync.common.Order
-import com.github.h0tk3y.betterParse.grammar.parser
 import io.kotlintest.matchers.collections.shouldHaveSize
 import io.kotlintest.matchers.collections.shouldNotHaveSize
 import io.kotlintest.shouldBe
-import io.kotlintest.shouldNotBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.StringSpec
 import java.io.File

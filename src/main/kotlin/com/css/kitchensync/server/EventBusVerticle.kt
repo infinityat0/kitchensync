@@ -41,6 +41,7 @@ class EventBusVerticle : AbstractVerticle() {
         // Create a http server and start serving on 8080
         createHttpServer()
 
+        // create a publish channel and use it to send updates on the event bus
         val publishChannel = makePublishChannel()
 
         // Initialize service and components
@@ -78,23 +79,6 @@ class EventBusVerticle : AbstractVerticle() {
         val statusPublisher = vertx.eventBus().publisher<String>(eventBusAddress)
         return statusPublisher.toChannel(vertx, 10)
     }
-
-//    private suspend fun startPublishingOnEventBus() {
-//        val statusPublisher = vertx.eventBus().publisher<String>(eventBusAddress)
-//        val shelfStatusChannel: SendChannel<String> = statusPublisher.toChannel(vertx, 10)
-//
-//        var pause = false
-//        while (true) {
-//            val shelfStatuses = shelfManager.sweepShelvesOnDemand()
-//            // don't keep sending empty stuff when you don't really need to.
-//            if (!pause) {
-//                logger.ifDebug { "shelfStatuses = ${Klaxon().toJsonString(shelfStatuses)}" }
-//                shelfStatusChannel.send(Klaxon().toJsonString(shelfStatuses))
-//            }
-//            pause = shelfStatuses.all { it.isEmpty() }
-//            delay(250)
-//        }
-//    }
 
     private fun initializeApplication(publishChannel: SendChannel<String>) {
         ApplicationLogger.initialize(kitchenSyncConfig)
