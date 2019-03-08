@@ -12,7 +12,7 @@ data class Order(
     @Json(name = "orderDecayFormula")
     val valueExpression: String = "shelfLife - (1 + decayRate)*orderAge") {
 
-    val id: Int = Random.nextInt()
+    val id: String = Random.nextInt().hex()
 
     companion object {
         val temperatureValues = setOf("hot", "cold", "frozen")

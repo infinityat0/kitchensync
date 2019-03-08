@@ -11,7 +11,7 @@ data class PreparedOrder(
     val temp: String,
     val shelfLife: Int,
     val decayRate: Float,
-    val id: Int = Random.nextInt(),
+    val id: String = Random.nextInt().hex(),
     val valueExpression: String = "shelfLife - (1 + decayRate)*orderAge") {
 
     // Should be updatable later since the time we create an instance may not
@@ -23,11 +23,14 @@ data class PreparedOrder(
     @VisibleForTesting var valueAtLastMeasured: Float = shelfLife.toFloat()
     @VisibleForTesting var lastMeasuredTimestamp: Long = preparedAt
 
-    @Synchronized fun computeAndAssignValue(computeTimeInMs: Long, isInOverflowShelf: Boolean) {
+    @Synchronized fun computeAndAssignValue(computeTimeInMs: Long, wasInOverflowShelf: Boolean) {
         val elapsed = (computeTimeInMs - lastMeasuredTimestamp)/1000
-        valueAtLastMeasured = valueAfter(elapsed.toInt(), isInOverflowShelf)
+        valueAtLastMeasured = valueAfter(elapsed.toInt(), wasInOverflowShelf)
         lastMeasuredTimestamp = computeTimeInMs
     }
+
+    fun status(shelfName: String) =
+        OrderStatus(id, name, shelfName, temp, valueAtLastMeasured, valueAtLastMeasured / shelfLife)
 
     /**
      * checks if the order has expired at the time of calling
@@ -54,7 +57,7 @@ data class PreparedOrder(
             val value = Instances.expressionEvaluator.parseToEnd(expression)
             if (value > 0.0f) value else 0f
         } catch (ex: Exception) {
-            logger.error("[${id.hex()}] Failed parsing value expression: formula=$valueExpression, " +
+            logger.error("[$id] Failed parsing value expression: formula=$valueExpression, " +
                     "postSubstitution=$expression")
             // call the order expired and move on
             0f

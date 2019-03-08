@@ -52,7 +52,7 @@ internal class RandomTimeDriverDispatcher(kitchenSyncConfig: Config): DriverDisp
     private val maxArrivalTime = kitchenSyncConfig.getInt("driver-max-arrival-time", 10)
 
     // Has a mapping from order-id -> driver that's running it
-    @VisibleForTesting val driverMap: ConcurrentMap<Int, Driver> = Maps.newConcurrentMap<Int, Driver>()
+    @VisibleForTesting val driverMap: ConcurrentMap<String, Driver> = Maps.newConcurrentMap<String, Driver>()
     // Has details of driver's run
     @VisibleForTesting val driverTracker: ConcurrentMap<String, Job> = Maps.newConcurrentMap<String, Job>()
 
@@ -72,7 +72,7 @@ internal class RandomTimeDriverDispatcher(kitchenSyncConfig: Config): DriverDisp
             val driver = makeDriver(order, arrivalTime)
 
             logger.info(
-                "[${order.id.hex()}] driver ${driver.name} dispatched: order=${order.name}. " +
+                "[${order.id}] driver ${driver.name} dispatched: order=${order.name}. " +
                         "Will arrive in ${driver.arrivalTime.seconds} seconds"
             )
             Stats.incr("kitchensync_service_orders_dispatched")
@@ -81,7 +81,7 @@ internal class RandomTimeDriverDispatcher(kitchenSyncConfig: Config): DriverDisp
             val job = launch {
                 delay(arrivalTime.toMillis())
                 if (!isDriverCancelled(driver)) {
-                    logger.info("[${order.id.hex()}] ${driver.name} is arriving...")
+                    logger.info("[${order.id}] ${driver.name} is arriving...")
                     // Stop tracking that driver since the driver is going to be at the door
                     driverMap.remove(driver.order.id)
                     driverTracker.remove(driver.name)
@@ -120,7 +120,7 @@ internal class RandomTimeDriverDispatcher(kitchenSyncConfig: Config): DriverDisp
             driverTracker.remove(driver.name)
             driverTracker[driver.name]?.cancel()
 
-            logger.info("[${driver.order.id.hex()}] driver cancelled: name=${driver.name}")
+            logger.info("[${driver.order.id}] driver cancelled: name=${driver.name}")
             Stats.incr("kitchensync_service_drivers_cancelled")
         }
     }

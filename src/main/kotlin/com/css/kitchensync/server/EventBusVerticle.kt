@@ -2,11 +2,10 @@
 
 package com.css.kitchensync.server
 
-import com.beust.klaxon.Klaxon
 import com.css.kitchensync.client.OrderGeneratorClient
+import com.css.kitchensync.config.getInt
 import com.css.kitchensync.config.getString
 import com.css.kitchensync.logging.ApplicationLogger
-import com.css.kitchensync.logging.ifDebug
 import com.css.kitchensync.service.OrderPreparationService
 import com.css.kitchensync.service.RandomTimeDriverDispatcher
 import com.css.kitchensync.service.ShelfManager
@@ -22,6 +21,7 @@ import io.vertx.ext.web.handler.sockjs.PermittedOptions
 import io.vertx.ext.web.handler.sockjs.SockJSHandler
 import io.vertx.kotlin.coroutines.toChannel
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.SendChannel
 import java.util.logging.Logger
 
 /**
@@ -36,68 +36,29 @@ import java.util.logging.Logger
 class EventBusVerticle : AbstractVerticle() {
 
     private val logger = Logger.getLogger(this.javaClass.simpleName)
-    private val kitchenSyncConfig: Config by lazy {
-        val config = ConfigFactory.load()
-        val env = System.getProperty("env", "production")
-        config.getConfig(env).getConfig("kitchensync")
-    }
-
-    private val eventBusAddress = kitchenSyncConfig.getString("event-bus-address", "shelf-status")
-    private val dispatcher = RandomTimeDriverDispatcher(kitchenSyncConfig)
-    private val kitchen = OrderPreparationService(kitchenSyncConfig, dispatcher)
-    private val shelfManager = ShelfManager(kitchenSyncConfig, dispatcher)
 
     override fun start(startFuture: Future<Void>) {
-        // Initialize service and components
-        initializeApplication()
+        // Create a http server and start serving on 8080
+        createHttpServer()
 
+        val publishChannel = makePublishChannel()
+
+        // Initialize service and components
+        initializeApplication(publishChannel)
+        // start publisher that publishes on the event bus
+        // GlobalScope.launch { startPublishingOnEventBus() }
+    }
+
+    private fun createHttpServer() {
         val router = Router.router(vertx)
         val sockJSHandler = makeSockJsHandler(eventBusAddress)
 
         router.route().handler(StaticHandler.create())
         router.route("/eventbus/*").handler(sockJSHandler)
 
-        vertx.createHttpServer().requestHandler(router).listen(8080)
-
-        // start publisher that publishes on the event bus
-        GlobalScope.launch { startPublishingOnEventBus() }
-    }
-
-    private suspend fun startPublishingOnEventBus() {
-        val statusPublisher = vertx.eventBus().publisher<String>(eventBusAddress)
-        val shelfStatusChannel = statusPublisher.toChannel(vertx, 10)
-
-        var pause = false
-        while (true) {
-            val shelfStatuses = shelfManager.sweepShelvesOnDemand()
-            // don't keep sending empty stuff when you don't really need to.
-            if (!pause) {
-                logger.ifDebug { "shelfStatuses = ${Klaxon().toJsonString(shelfStatuses)}" }
-                shelfStatusChannel.send(Klaxon().toJsonString(shelfStatuses))
-            }
-            pause = shelfStatuses.all { it.isEmpty() }
-            delay(250)
-        }
-    }
-
-    private fun initializeApplication() {
-        ApplicationLogger.initialize(kitchenSyncConfig)
-        logger.info("initializing the application")
-        // Make sure to shutdown gracefully when killed.
-        Runtime.getRuntime().addShutdownHook(Thread { stop() })
-        logger.info("shutdown hook attached")
-        // start service that handles orders
-        GlobalScope.launch {
-            coroutineScope {
-                kitchen.initialize()
-                dispatcher.initialize()
-                shelfManager.initialize()
-            }
-        }
-        // start the order generator client.
-        GlobalScope.launch {
-            OrderGeneratorClient(kitchenSyncConfig, kitchen).startSendingOrders()
-        }
+        vertx.createHttpServer()
+            .requestHandler(router)
+            .listen(kitchenSyncConfig.getInt("service.port", 8080))
     }
 
     private fun makeSockJsHandler(address: String): SockJSHandler {
@@ -113,6 +74,49 @@ class EventBusVerticle : AbstractVerticle() {
         }
     }
 
+    private fun makePublishChannel(): SendChannel<String> {
+        val statusPublisher = vertx.eventBus().publisher<String>(eventBusAddress)
+        return statusPublisher.toChannel(vertx, 10)
+    }
+
+//    private suspend fun startPublishingOnEventBus() {
+//        val statusPublisher = vertx.eventBus().publisher<String>(eventBusAddress)
+//        val shelfStatusChannel: SendChannel<String> = statusPublisher.toChannel(vertx, 10)
+//
+//        var pause = false
+//        while (true) {
+//            val shelfStatuses = shelfManager.sweepShelvesOnDemand()
+//            // don't keep sending empty stuff when you don't really need to.
+//            if (!pause) {
+//                logger.ifDebug { "shelfStatuses = ${Klaxon().toJsonString(shelfStatuses)}" }
+//                shelfStatusChannel.send(Klaxon().toJsonString(shelfStatuses))
+//            }
+//            pause = shelfStatuses.all { it.isEmpty() }
+//            delay(250)
+//        }
+//    }
+
+    private fun initializeApplication(publishChannel: SendChannel<String>) {
+        ApplicationLogger.initialize(kitchenSyncConfig)
+        logger.info("initializing the application")
+        // Make sure to shutdown gracefully when killed.
+        Runtime.getRuntime().addShutdownHook(Thread { stop() })
+        logger.info("shutdown hook attached")
+        // start service that handles orders
+        val shelfManager = ShelfManager(kitchenSyncConfig, dispatcher, publishChannel)
+        GlobalScope.launch {
+            coroutineScope {
+                kitchen.initialize()
+                dispatcher.initialize()
+                shelfManager.initialize()
+            }
+        }
+        // start the order generator client.
+        GlobalScope.launch {
+            OrderGeneratorClient(kitchenSyncConfig, kitchen).startSendingOrders()
+        }
+    }
+
     /**
      * Stop the server, and possibly the client.
      * Clean up any resources that we are holding on to
@@ -122,5 +126,17 @@ class EventBusVerticle : AbstractVerticle() {
         vertx.eventBus().close {
             logger.info("shut down event bus at address: $eventBusAddress")
         }
+    }
+
+    companion object {
+        private val kitchenSyncConfig: Config by lazy {
+            val config = ConfigFactory.load()
+            val env = System.getProperty("env", "production")
+            config.getConfig(env).getConfig("kitchensync")
+        }
+
+        private val eventBusAddress = kitchenSyncConfig.getString("event-bus-address", "shelf-status")
+        private val dispatcher = RandomTimeDriverDispatcher(kitchenSyncConfig)
+        private val kitchen = OrderPreparationService(kitchenSyncConfig, dispatcher)
     }
 }

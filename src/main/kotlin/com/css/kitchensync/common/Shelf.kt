@@ -5,7 +5,7 @@ import com.google.common.collect.Maps
 
 class Shelf(val name: String, private val size: Int) {
 
-    private val shelf = Maps.newConcurrentMap<Int, PreparedOrder>()
+    private val shelf = Maps.newConcurrentMap<String, PreparedOrder>()
 
     /**
      * Attempts to push an order in the shelf.
@@ -46,5 +46,5 @@ class Shelf(val name: String, private val size: Int) {
         return expiredOrders.values
     }
 
-    @VisibleForTesting fun getOrder(id: Int): PreparedOrder? = shelf[id]
+    @VisibleForTesting fun getOrder(id: String): PreparedOrder? = shelf[id]
 }

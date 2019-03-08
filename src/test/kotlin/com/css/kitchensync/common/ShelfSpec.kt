@@ -102,7 +102,7 @@ class ShelfSpec: StringSpec() {
             val order = PreparedOrder("Ice Cream", "frozen", shelfLife = 10, decayRate = 1.0f)
             order.computeAndAssignValue(
                 computeTimeInMs = System.currentTimeMillis() + 2000,
-                isInOverflowShelf = false)
+                wasInOverflowShelf = false)
             order.valueAtLastMeasured shouldBe 6.0f
         }
 
@@ -112,7 +112,7 @@ class ShelfSpec: StringSpec() {
             // when kept in overflow shelf, it should have decayed twice as much
             order.computeAndAssignValue(
                 computeTimeInMs = System.currentTimeMillis() + 2000,
-                isInOverflowShelf = true)
+                wasInOverflowShelf = true)
             order.valueAtLastMeasured shouldBe 4.0f
 
         }
@@ -122,14 +122,14 @@ class ShelfSpec: StringSpec() {
             // when kept in overflow shelf, it should have decayed twice as much
             order.computeAndAssignValue(
                 computeTimeInMs = System.currentTimeMillis() + 2000,
-                isInOverflowShelf = true)
+                wasInOverflowShelf = true)
             // in 2 seconds order would have decayed by 6 points
             order.valueAtLastMeasured shouldBe 6.0f
 
             // move it to it's own shelf and wait for two more seconds
             order.computeAndAssignValue(
                 computeTimeInMs = order.lastMeasuredTimestamp + 2000,
-                isInOverflowShelf = false)
+                wasInOverflowShelf = false)
             // it should have decayed by 4 points
             order.valueAtLastMeasured shouldBe 2.0f
         }

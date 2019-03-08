@@ -83,7 +83,7 @@ class OrderGeneratorClient(
      * Sends the order out to the service.
      */
     private fun sendOrder(order: Order) {
-        logger.ifDebug { "[${order.id.hex()}] Sending order to kitchen: ${order.name}" }
+        logger.ifDebug { "[${order.id}] Sending order to kitchen: ${order.name}" }
         GlobalScope.launch { service.prepareOrder(order) }
     }
 

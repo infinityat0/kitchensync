@@ -2,7 +2,6 @@ package com.css.kitchensync.service
 
 import com.css.kitchensync.common.Order
 import com.css.kitchensync.common.PreparedOrder
-import com.css.kitchensync.common.hex
 import com.css.kitchensync.config.getInt
 import com.css.kitchensync.metrics.Stats
 import com.google.common.annotations.VisibleForTesting
@@ -45,7 +44,7 @@ class OrderPreparationService(
             // update the order start-time
             val preparedOrder = PreparedOrder.fromOrderRequest(order)
 
-            logger.info("[${preparedOrder.id.hex()}] prepared order: ${order.name}")
+            logger.info("[${preparedOrder.id}] prepared order: ${order.name}")
             // every time a chef prepares an order, increment the counter
             Stats.incr("kitchensync_service_orders_prepared_in_kitchen")
             Stats.incr("kitchensync_service_orders_prepared_by_chef$id")
