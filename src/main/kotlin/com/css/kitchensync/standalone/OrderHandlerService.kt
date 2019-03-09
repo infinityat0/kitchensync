@@ -1,10 +1,12 @@
-package com.css.kitchensync.service
+package com.css.kitchensync.standalone
 
 import com.css.kitchensync.common.Order
+import com.css.kitchensync.service.OrderPreparationService
+import com.css.kitchensync.service.RandomTimeDriverDispatcher
+import com.css.kitchensync.service.ShelfManager
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 

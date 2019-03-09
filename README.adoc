@@ -33,6 +33,10 @@ To run application:
 ```
 and go to http://localhost:8080
 
+(Note: keep refreshing until page loads. Right after web service launches the order client
+start pumping out orders. We don't want to miss those initial orders. Hence, keep refreshing until page goes from
+this "site can't be reached" to loaded)
+
 To run it as a standalone application: (no html, shelf status printed in the console)
 ```
 ./gradlew clean runStandalone
@@ -129,11 +133,10 @@ To generate Kotlindoc
 
 === Future Improvements
 * We could have used koin for dependency injection
-* Shelf Manager could emit ``Message`` objects indicating status of each order and what happened
+* Shelf Manager could emit ``Message`` objects indicating status of each order and what happened (and show in UI)
 ** Handed to driver
 ** Moved to/from overflow [Already Done]
 ** Discarded and cancelled driver
-and we could show this in UI.
 
 '''
 * Pun intended

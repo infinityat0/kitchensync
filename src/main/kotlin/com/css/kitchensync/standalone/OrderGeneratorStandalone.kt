@@ -8,7 +8,6 @@ import com.css.kitchensync.logging.ApplicationLogger
 import com.css.kitchensync.logging.error
 import com.css.kitchensync.logging.ifDebug
 import com.css.kitchensync.metrics.Stats
-import com.css.kitchensync.service.OrderHandlerService
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import kotlinx.coroutines.GlobalScope

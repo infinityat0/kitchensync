@@ -46,8 +46,6 @@ class EventBusVerticle : AbstractVerticle() {
 
         // Initialize service and components
         initializeApplication(publishChannel)
-        // start publisher that publishes on the event bus
-        // GlobalScope.launch { startPublishingOnEventBus() }
     }
 
     private fun createHttpServer() {
@@ -86,6 +84,7 @@ class EventBusVerticle : AbstractVerticle() {
         // Make sure to shutdown gracefully when killed.
         Runtime.getRuntime().addShutdownHook(Thread { stop() })
         logger.info("shutdown hook attached")
+
         // start service that handles orders
         val shelfManager = ShelfManager(kitchenSyncConfig, dispatcher, publishChannel)
         GlobalScope.launch {

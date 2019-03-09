@@ -4,7 +4,6 @@ import com.css.kitchensync.common.Order
 import com.css.kitchensync.common.PreparedOrder
 import com.css.kitchensync.config.getInt
 import com.css.kitchensync.metrics.Stats
-import com.google.common.annotations.VisibleForTesting
 import com.typesafe.config.Config
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
@@ -55,7 +54,7 @@ class OrderPreparationService(
         }
     }
 
-    @VisibleForTesting fun prepareOrder(order: Order) = runBlocking {
+    internal fun prepareOrder(order: Order) = runBlocking {
         orderPipeline.send(order)
     }
 }

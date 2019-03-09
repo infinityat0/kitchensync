@@ -2,7 +2,6 @@ package com.css.kitchensync.common
 
 import com.css.kitchensync.logging.error
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
-import com.google.common.annotations.VisibleForTesting
 import java.util.logging.Logger
 import kotlin.random.Random
 
@@ -20,8 +19,8 @@ data class PreparedOrder(
 
     // Initial value should coincide with the shelfLife of the order
     // At order created time, value is shelf value
-    @VisibleForTesting var valueAtLastMeasured: Float = shelfLife.toFloat()
-    @VisibleForTesting var lastMeasuredTimestamp: Long = preparedAt
+    internal var valueAtLastMeasured: Float = shelfLife.toFloat()
+    internal var lastMeasuredTimestamp: Long = preparedAt
 
     @Synchronized fun computeAndAssignValue(computeTimeInMs: Long, wasInOverflowShelf: Boolean) {
         val elapsed = (computeTimeInMs - lastMeasuredTimestamp)/1000
@@ -39,14 +38,14 @@ data class PreparedOrder(
         return valueNow(isInOverflowShelf) <= 0
     }
 
-    @VisibleForTesting fun valueNow(isInOverflowShelf: Boolean = false): Float {
+    internal fun valueNow(isInOverflowShelf: Boolean = false): Float {
         return valueAfter(
             orderAgeInSeconds = ((System.currentTimeMillis() - lastMeasuredTimestamp)/1000).toInt(),
             isInOverflowShelf = isInOverflowShelf
         )
     }
 
-    @VisibleForTesting fun valueAfter(orderAgeInSeconds: Int, isInOverflowShelf: Boolean = false): Float {
+    internal fun valueAfter(orderAgeInSeconds: Int, isInOverflowShelf: Boolean = false): Float {
         // if order is in overflow then it decays faster
         val decayRate: Float = if (isInOverflowShelf) 2 * decayRate else decayRate
         val expression = valueExpression

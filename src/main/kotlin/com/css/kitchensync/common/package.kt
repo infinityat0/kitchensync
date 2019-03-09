@@ -25,10 +25,10 @@ data class OrderStatus(
     fun toJson() = Instances.jsonParser.toJsonString(this)
 }
 
-data class ShelfStatus(val shelfName: String, val orderStatus: List<OrderStatus>) {
+data class ShelfStatus(val shelfName: String, val orderStatuses: List<OrderStatus>) {
     fun toJson() = Instances.jsonParser.toJsonString(this)
 
-    fun isEmpty() = orderStatus.isEmpty()
+    fun isEmpty() = orderStatuses.isEmpty()
 }
 
 interface Message {
@@ -44,7 +44,7 @@ class RemoveOrder(
     val orderStatus: OrderStatus,
     val action: String = "remove-order"): Message
 
-class MovedOrder(
+class MoveOrder(
     val fromShelf: String,
     val toShelf: String,
     val orderStatus: OrderStatus,

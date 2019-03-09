@@ -6,7 +6,6 @@ import com.css.kitchensync.config.getInt
 import com.css.kitchensync.duration.seconds
 import com.css.kitchensync.logging.ifDebug
 import com.css.kitchensync.metrics.Stats
-import com.google.common.annotations.VisibleForTesting
 import com.google.common.collect.Maps
 import com.typesafe.config.Config
 import kotlinx.coroutines.*
@@ -53,9 +52,9 @@ internal class RandomTimeDriverDispatcher(kitchenSyncConfig: Config): DriverDisp
     private val maxArrivalTime = kitchenSyncConfig.getInt("driver-max-arrival-time", 10)
 
     // Has a mapping from order-id -> driver that's running it
-    @VisibleForTesting val driverMap: ConcurrentMap<String, Driver> = Maps.newConcurrentMap<String, Driver>()
+    internal val driverMap: ConcurrentMap<String, Driver> = Maps.newConcurrentMap<String, Driver>()
     // Has details of driver's run
-    @VisibleForTesting val driverTracker: ConcurrentMap<String, Job> = Maps.newConcurrentMap<String, Job>()
+    internal val driverTracker: ConcurrentMap<String, Job> = Maps.newConcurrentMap<String, Job>()
 
     // Someday I'll have to figure how to tame these coroutines into a CoroutineScope
     override fun initialize() = GlobalScope.launch {
@@ -98,7 +97,7 @@ internal class RandomTimeDriverDispatcher(kitchenSyncConfig: Config): DriverDisp
     private fun makeDriver(order: PreparedOrder, arrivalTime: Duration) =
         Driver("driver-${Random.nextInt().hex()}", order, arrivalTime)
 
-    @VisibleForTesting fun getArrivalTime(): Duration {
+    internal fun getArrivalTime(): Duration {
         // need arrival time to be between [2, 10] seconds
         return (Random.nextInt(until = (maxArrivalTime - minArrivalTime) + 1) + minArrivalTime).seconds()
     }

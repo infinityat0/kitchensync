@@ -11,14 +11,14 @@ class ShelfSpec: StringSpec() {
 
     init {
         "should be able to put an order" {
-            val shelf = Shelf("hot", size = 5)
+            val shelf = Shelf("hot", capacity = 5)
             val order = makeOrder("foo")
             shelf.putOrder(order)
             shelf.getOrder(order.id) shouldBe order
         }
 
         "should accept orders until the max size" {
-            val shelf = Shelf("hot", size = 5)
+            val shelf = Shelf("hot", capacity = 5)
             for (i in 1..5) {
                 shelf.putOrder(makeOrder("foo-$i")) shouldBe true
             }
@@ -26,7 +26,7 @@ class ShelfSpec: StringSpec() {
         }
 
         "should stop accepting orders after size limit is reached" {
-            val shelf = Shelf("hot", size = 5)
+            val shelf = Shelf("hot", capacity = 5)
             for (i in 1..5) {
                 shelf.putOrder(makeOrder("foo-$i")) shouldBe true
             }
@@ -35,21 +35,21 @@ class ShelfSpec: StringSpec() {
         }
 
         "should be able to remove an order from the shelf" {
-            val shelf = Shelf("hot", size = 5)
+            val shelf = Shelf("hot", capacity = 5)
             val order = makeOrder("foo")
             shelf.putOrder(order) shouldBe true
             shelf.removeFromShelf(order = order) shouldBe true
         }
 
         "removing an unknown order should return false" {
-            val shelf = Shelf("hot", size = 5)
+            val shelf = Shelf("hot", capacity = 5)
             val order = makeOrder("foo")
             shelf.putOrder(order) shouldBe true
             shelf.removeFromShelf(makeOrder("bar")) shouldBe false
         }
 
         "check size of the shelf" {
-            val shelf = Shelf("hot", size = 5)
+            val shelf = Shelf("hot", capacity = 5)
             shelf.putOrder(makeOrder("foo"))
             shelf.getSize() shouldBe 1
 
@@ -58,7 +58,7 @@ class ShelfSpec: StringSpec() {
         }
 
         "check if shelf is full" {
-            val shelf = Shelf("hot", size = 2)
+            val shelf = Shelf("hot", capacity = 2)
             // these are distinct orders since they have different id
             shelf.putOrder(makeOrder("foo"))
             shelf.putOrder(makeOrder("foo"))
@@ -67,7 +67,7 @@ class ShelfSpec: StringSpec() {
         }
 
         "get all values in the shelf" {
-            val shelf = Shelf("hot", size = 3)
+            val shelf = Shelf("hot", capacity = 3)
             for (i in 1..3) {
                 shelf.putOrder(makeOrder("foo-$i"))
             }
@@ -75,7 +75,7 @@ class ShelfSpec: StringSpec() {
         }
 
         "cleanup should return nothing if orders haven't expired" {
-            val shelf = Shelf("hot", size = 3)
+            val shelf = Shelf("hot", capacity = 3)
             for (i in 1..3) {
                 shelf.putOrder(makeOrder("foo-$i"))
             }
@@ -83,7 +83,7 @@ class ShelfSpec: StringSpec() {
         }
 
         "cleanup should only return expired orders" {
-            val shelf = Shelf("hot", size = 5)
+            val shelf = Shelf("hot", capacity = 5)
             for (i in 1..3) {
                 shelf.putOrder(makeOrder("foo-$i"))
             }

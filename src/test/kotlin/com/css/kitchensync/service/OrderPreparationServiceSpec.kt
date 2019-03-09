@@ -1,11 +1,11 @@
 package com.css.kitchensync.service
 
 import com.css.kitchensync.common.Order
-import com.css.kitchensync.common.PreparedOrder
 import com.css.kitchensync.testConfig
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.StringSpec
-import kotlinx.coroutines.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 
 class OrderPreparationServiceSpec : StringSpec() {
 
@@ -35,21 +35,6 @@ class OrderPreparationServiceSpec : StringSpec() {
                     }
                 }
             }
-        }
-    }
-
-    class FakeDispatcher: DriverDispatchService {
-
-        val dispatchedOrders = mutableListOf<PreparedOrder>()
-
-        override fun initialize(): Job = GlobalScope.launch { }
-
-        override fun cancelDriverForOrder(order: PreparedOrder) {
-            // TODO("not implemented")
-        }
-
-        override fun dispatchDriver(order: PreparedOrder) {
-            dispatchedOrders.add(order)
         }
     }
 }
