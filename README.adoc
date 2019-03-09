@@ -87,30 +87,54 @@ To generate Kotlindoc
    See ``resources/application.conf:production.kitchensync.client.orders.mean-traffic``
 ** OrderGeneratorClient "sends" the orders to OrderHandlerService
    (In ideal world these come from the http service/SQS/kafka etc)
+
+==== OrderHandlerService
 * OrderHandlerService uses channels to communicate with
 ** Order Preparation Service (aka kitchen)
 ** Dispatcher Service (Interface used to dispatch a driver with one implementation class: RandomTimeDriverDispatcher)
 ** ShelfManagerService (ShelfManager)
-* OrderPreparationService
+
+==== OrderPreparationService
 ** prepares the orders (and sets the prep time on the order)
 ** Calls for dispatcher to assign a driver
 ** Calls ShelfManager to manage this order (assign an appropriate shelf)
-* DispatcherService
+
+==== DispatcherService
 ** Creates a Driver, dispatches driver to arrive at a random time
    (2-10 seconds: this is configurable in application.conf)
 ** Starts tracking order -> driver mapping
 ** Starts tracking driver -> arrival mapping. (Let's ShelfManager know that driver has arrived after)
 ** cancels the driver when ``DispatcherService:cancelDriverForOrder()`` is called
-* ShelfManager
-**
 
+==== ShelfManager
+* Starts handling orders given to it by OrderProcessingService
+* Adding orders
+** Puts them in a shelf. If it works, then sends a message on the channel (event bus) with it's computed value
+** If it doesn't, then it will try to put it in overflow shelf and then send a message on the channel
+   (See: ``ShelfManager.addOrderToShelf``).
+** If that doesn't work, then it discards the order and cancels the driver
+
+* Removing orders
+** When the driver arrives, dispatcher will indicate that driver has arrived. (``ShelfManager.arrivedDriversChannel``)
+** This will trigger "handing" over the order to driver and removing it from the shelf
+** We remove orders when an order has expired as well. This also triggers driver cancellation
+** Expired orders are checked by a periodic sweep on the shelf by ``ticker``
+
+* Housekeeping
+** Coroutine periodically (configurable in application.conf) checks the status of the shelves
+** Removes any expired orders. If the order has expired it triggers a ``RemoveOrder`` message in the event bus
+** Moves any orders from overflow shelf to other shelves and checkpoints their current value. This current value is
+   based on the decay rate in overflow shelf. Next time housekeeping runs and checks it's value it will be based on the
+   decay rate of it's corresponding shelf.
 
 === Future Improvements
 * We could have used koin for dependency injection
 * Shelf Manager could emit ``Message`` objects indicating status of each order and what happened
 ** Handed to driver
-** Moved to/from overflow
+** Moved to/from overflow [Already Done]
 ** Discarded and cancelled driver
+and we could show this in UI.
 
 '''
-* This doc is best viewed with asciiDoctor.js chrome extension.
+* Pun intended
+**this doc is best viewed with asciidoctor.js chrome extension.
